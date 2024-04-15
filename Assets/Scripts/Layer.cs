@@ -17,9 +17,13 @@ public class Layer
     public void SetInputConnections(Layer previousLayer){
         foreach(Neuron neuron in neurons){
             for(int i = 0; i < previousLayer.numNeurons; i++) {
-                neuron.connectionsIn.Add(new Connection(previousLayer.neurons[i]));
+                neuron.connectionsIn.Add(new Connection(previousLayer.neurons[i], neuron));
             }
         }
     }
-
+    public void learn(double step){
+        for (int i = 0; i < numNeurons; i++){
+            neurons[i].learn(step);
+        }
+    }
 }
