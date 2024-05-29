@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using static System.Math;
+
 public class Connection
 {
     public double weight;
@@ -12,7 +14,14 @@ public class Connection
     public Connection(Neuron _previousNeuron, Neuron _nextNeuron){
         previousNeuron = _previousNeuron;
         nextNeuron = _nextNeuron;
-        weight = Random.Range(-1f, 1f);
+
+        System.Random random = new System.Random();
+
+        double a, b;
+        a = random.NextDouble();
+        b = random.NextDouble();
+        weight = Sqrt(-2.0*Log(a)) * Cos(2.0*PI*b);
+        //weight = 0.5;
     }
 
     public void addDelta(double delta){
@@ -20,7 +29,7 @@ public class Connection
     }
 
     public void learn(double step){
-        weight += step * deltaSum; // +?
+        weight += step * deltaSum; // ??? +
         deltaSum = 0;
     }
 }

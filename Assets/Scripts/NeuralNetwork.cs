@@ -13,7 +13,7 @@ public class NeuralNetwork
     private List<double> costs = new List<double>();
     public Layer[] layers;
     private int batchSize = 10; // Serializable
-    private int step = 3; // Serializable
+    private double step = 2; // Serializable
     private int trainingIteration = 0;
     public NeuralNetwork(params int[] layerSizes){
         if (layerSizes.Length < 2){
@@ -33,6 +33,13 @@ public class NeuralNetwork
 
     public double[] CalculateOutputs(List<double> inputValues)
     {
+        foreach (var layer in layers)
+        {
+            foreach (var neuron in layer.neurons)
+            {
+                neuron.value=default(double);
+            }
+        }
         // Set input values on to the input layer
         for (int i = 0; i < inputValues.Count; i++)
         {
@@ -52,7 +59,7 @@ public class NeuralNetwork
            double sum = 0;
             for (int i = 0; i < output.Length; i++)
             {
-                sum += Math.Pow((expected[i] - output[i]), 2) / (2 * output.Length);
+                sum += Math.Pow((expected[i] - output[i]), 2);
             }
             return sum; 
         }
@@ -63,7 +70,7 @@ public class NeuralNetwork
         }
     }
 
-    public void Train(List<double> inputValues, List<double> expected){ // Add input?
+    public void Train(List<double> inputValues, List<double> expected){
         trainingIteration++;
 
         double[] output;
@@ -72,44 +79,53 @@ public class NeuralNetwork
         // Calculate values
         output = CalculateOutputs(inputValues);
 
+        
+        // foreach (var item in output)
+        // {
+        //     Debug.Log(trainingIteration+": "+item);
+        // }
+
         // Calculates delta for the output layer
         for (int i = 0; i < expected.Count; i++){
             layers[layers.Length-1].neurons[i].setOutputDelta(expected[i]);
         }
 
         // Cost
-        cost = GetCost(output, expected);
+        cost = GetCost(DenormalizeOutput(output), DenormalizeOutput(expected));
+
+        
 
         // back propagate the deltas
         for (int i = 0; i < layers[0].numNeurons; i++){
-            layers[0].neurons[i].getDelta(); // Add it to the layers class?
+            layers[0].neurons[i].getDelta();
         }
 
-        // ???
         if (trainingIteration % batchSize == 0){
             for (int i = 0; i < layers.Length; i++){
                 layers[i].learn((double)step/batchSize);
             }
         }
+        if (trainingIteration%1001==1)
+            Debug.Log(trainingIteration + " - e: " + DenormalizeOutput(expected)[0] + " o: " + DenormalizeOutput(output)[0] + " c: " + cost);
 
         costs.Add(cost);
     }
 
     public void TrainNetwork(int epoches){
-        //double startTime = Time.time * 1000;
+        float startTime = Time.realtimeSinceStartup;
         for (int i = 0; i < epoches; i++){
             for (int j = 0; j < data.Count; j++)
             {
                 List<double> input = data[j].getInput();
                 List<double> expected = data[j].getExpected();
                 Train(input, expected);
-                if (trainingIteration%100==0){
-                    Debug.Log("Cos: " + j + " Cost: " + getAverageCost());
+                if (trainingIteration%1001==1){
+                    Debug.Log("Iteration: " + j + " Cost: " + getAverageCost());
                 }
             }
-            
-            //Debug.Log("Train time: " + (double)(Time.time*1000 - startTime));
         }
+        float endTime = Time.realtimeSinceStartup - startTime;
+        Debug.Log("Train time: " + (int)(endTime/60) + "m " + endTime +"s");
     }
 
     public void ReadFromCSV(string path){
@@ -147,6 +163,8 @@ public class NeuralNetwork
         }
     }
 
+    double minExpected, maxExpected;
+
    public void NormalizeData()
     {
         // Find min and max values for each feature (input and expected)
@@ -178,8 +196,8 @@ public class NeuralNetwork
         }
 
         // Normalize the expected values
-        double minExpected = double.MaxValue;
-        double maxExpected = double.MinValue;
+        minExpected = double.MaxValue;
+        maxExpected = double.MinValue;
         foreach (Data entry in data)
         {
             foreach (double val in entry.getExpected())
@@ -200,14 +218,38 @@ public class NeuralNetwork
         }
     }
 
+    public double[] DenormalizeOutput(double[] normalizedOutput)
+    {
+        double[] denormalizedOutput = new double[normalizedOutput.Length];
+        int i = 0;
+        foreach (double normalizedVal in normalizedOutput)
+        {
+            double denormalizedVal = normalizedVal * (maxExpected - minExpected) + minExpected;
+            denormalizedOutput[i] = denormalizedVal;
+            i++;
+        }
+        return denormalizedOutput;
+    }
 
+    public List<double> DenormalizeOutput(List<double> normalizedOutput)
+    {
+        List<double> denormalizedOutput = new List<double>();
+        foreach (double normalizedVal in normalizedOutput)
+        {
+            double denormalizedVal = normalizedVal * (maxExpected - minExpected) + minExpected;
+            denormalizedOutput.Add(denormalizedVal);
+        }
+        return denormalizedOutput;
+    }
 
     public double getAverageCost(){
         double sum =0;
         for (int i = 0; i < costs.Count; i++) {
             sum += costs[i];
         }
-        return sum / costs.Count;
+        double result = sum / costs.Count;
+        costs.Clear();
+        return result;
     }
     
 }

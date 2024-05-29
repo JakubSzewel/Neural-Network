@@ -16,13 +16,23 @@ public class Neuron
 
     public Neuron(){
         connectionsIn = new List<Connection>();
+
+        System.Random random = new System.Random();
+
+        double a, b;
+        a = random.NextDouble();
+        b = random.NextDouble();
+        bias = Sqrt(-2.0*Log(a)) * Cos(2.0*PI*b);
     }
 
 
     public void CalculateValue(){
+        z = 0;
         for (int i = 0; i < connectionsIn.Count; i++){
             z += connectionsIn[i].previousNeuron.getValue() * connectionsIn[i].weight;
         }
+        if (connectionsIn.Count > 0)
+            z /= (double)connectionsIn.Count;
         z += bias;
         value = ActivationFunction(z);
     }

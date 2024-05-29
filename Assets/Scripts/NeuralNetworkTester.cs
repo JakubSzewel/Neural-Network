@@ -8,7 +8,7 @@ public class NeuralNetworkTester : MonoBehaviour
     public void Click()
     {
         // Define your neural network architecture
-        neuralNetwork = new NeuralNetwork(11, 1000, 1000, 1);
+        neuralNetwork = new NeuralNetwork(11, 100, 100, 25, 25, 1);
 
         // Test the network
         TestNetwork();
@@ -37,7 +37,7 @@ public class NeuralNetworkTester : MonoBehaviour
         Display(output);
         */
         neuralNetwork.ReadFromCSV("C:/Users/kubas/Downloads/winequality-red.csv");
-        neuralNetwork.TrainNetwork(1);
+        neuralNetwork.TrainNetwork(10);
         
     }
 }
