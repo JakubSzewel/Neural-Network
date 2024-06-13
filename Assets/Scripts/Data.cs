@@ -11,8 +11,10 @@ public class Data
         input.Add(inputValue);
     }
 
-    public void AddExpected(double expectedValue){
-        expected.Add(expectedValue);
+    public void AddExpected(int expectedValue){
+        double[] oneHot = new double[6];
+        oneHot[expectedValue - 3] = 1;
+        expected.AddRange(oneHot);
     }
 
     public List<double> getInput(){

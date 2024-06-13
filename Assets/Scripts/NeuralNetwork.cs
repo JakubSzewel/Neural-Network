@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor.PackageManager;
 using UnityEngine;
@@ -35,9 +36,11 @@ public class NeuralNetwork
     {
         foreach (var layer in layers)
         {
-            foreach (var neuron in layer.neurons)
-            {
-                neuron.value=default(double);
+            if (layer.neurons[0].connectionsIn.Count > 0){
+                foreach (var neuron in layer.neurons)
+                {
+                    neuron.value=default(double);
+                }
             }
         }
         // Set input values on to the input layer
@@ -48,7 +51,7 @@ public class NeuralNetwork
 
         double[] output = new double[layers[layers.Length - 1].numNeurons];
         for (int i = 0; i < layers[layers.Length - 1].numNeurons; i++){
-            output[i] = layers[layers.Length - 1].neurons[i].getValue();
+            output[i] = layers[layers.Length - 1].neurons[i].getValue(true);
         }
         return output;
     }
@@ -77,8 +80,8 @@ public class NeuralNetwork
         double cost;
 
         // Calculate values
-        output = CalculateOutputs(inputValues);
-
+        //output = SoftMax(CalculateOutputs(inputValues));
+        output = SoftMax(CalculateOutputs(inputValues));
         
         // foreach (var item in output)
         // {
@@ -105,10 +108,18 @@ public class NeuralNetwork
                 layers[i].learn((double)step/batchSize);
             }
         }
-        if (trainingIteration%1001==1)
-            Debug.Log(trainingIteration + " - e: " + DenormalizeOutput(expected)[0] + " o: " + DenormalizeOutput(output)[0] + " c: " + cost);
+        // for (int i = 0; i < 6; i++){
+        //     Debug.Log(trainingIteration + " - e: " + DenormalizeOutput(expected)[i] + " o: " + DenormalizeOutput(output)[i] + " c: " + cost);
+        // }
+
 
         costs.Add(cost);
+    }
+
+    private double[] SoftMax(double[] array){
+        double max = array.Max();
+        double sum = array.Sum(val => Math.Exp(val - max));
+        return array.Select(val => Math.Exp(val - max) / sum).ToArray();
     }
 
     public void TrainNetwork(int epoches){
@@ -118,6 +129,8 @@ public class NeuralNetwork
             {
                 List<double> input = data[j].getInput();
                 List<double> expected = data[j].getExpected();
+
+
                 Train(input, expected);
                 if (trainingIteration%1001==1){
                     Debug.Log("Iteration: " + j + " Cost: " + getAverageCost());
@@ -126,6 +139,36 @@ public class NeuralNetwork
         }
         float endTime = Time.realtimeSinceStartup - startTime;
         Debug.Log("Train time: " + (int)(endTime/60) + "m " + endTime +"s");
+        Debug.Log(data.Count);
+        TestNetwork();
+    }
+
+      public void TestNetwork(){
+        int goodGuesses = 0;
+        for(int i =0; i<data.Count;i++){
+                double[] output;
+                List<double> input = data[i].getInput();
+                List<double> expected = data[i].getExpected();
+                output = SoftMax(CalculateOutputs(input));
+                Debug.Log("i:" + i);
+                double max = -1000.0;
+                int eMax = -1;
+                int oMax = -1;
+                for (int j = 0; j < 6; j++) {
+                    Debug.Log("Output: "+ output[j]+", Expected: "+expected[j]);
+                    if (output[j] > max){
+                        max = output[j];
+                        oMax = j;
+                    }
+                    if (expected[j] == 1.0){
+                        eMax = j;
+                    }
+                }
+                if(oMax == eMax)
+                    goodGuesses++;
+        }
+        Debug.Log(goodGuesses);
+        Debug.Log("Correct guesses: " + Math.Round((double)goodGuesses/(double)data.Count,3)*100 + "%");
     }
 
     public void ReadFromCSV(string path){
@@ -151,7 +194,7 @@ public class NeuralNetwork
                 for (int i = 0; i < values.Length - 1; i++){
                     dataTemp.AddInput(list[i]);
                 }
-                dataTemp.AddExpected(list[values.Length-1]);
+                dataTemp.AddExpected((int)list[values.Length-1]);
                 data.Add(dataTemp);
             }
 

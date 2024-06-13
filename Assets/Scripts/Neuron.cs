@@ -22,24 +22,25 @@ public class Neuron
         double a, b;
         a = random.NextDouble();
         b = random.NextDouble();
-        bias = Sqrt(-2.0*Log(a)) * Cos(2.0*PI*b);
+        bias = Sqrt(-2.0*Log(a)) * Cos(2.0*PI*b) * 0.01;
     }
 
 
     public void CalculateValue(){
         z = 0;
         for (int i = 0; i < connectionsIn.Count; i++){
-            z += connectionsIn[i].previousNeuron.getValue() * connectionsIn[i].weight;
+            z += connectionsIn[i].previousNeuron.getValue(false) * connectionsIn[i].weight;
         }
-        if (connectionsIn.Count > 0)
-            z /= (double)connectionsIn.Count;
         z += bias;
-        value = ActivationFunction(z);
     }
 
-    public double getValue(){
-        if (value == default(double)){
+    public double getValue(bool isOutputLayer = false){
+        if (connectionsIn.Count > 0 && value == default(double)){
             CalculateValue();
+            if (!isOutputLayer)
+                value = ActivationFunction(z);
+            else
+                value = z;
         }
         return value;
     }
@@ -80,7 +81,15 @@ public class Neuron
     }
 
     double ActivationFunction(double x){
-        return 1 / (1 + Exp(-x)); // Sigmoid 
+        return SigmoidFunction(x);
+    }
+
+    double SigmoidFunction(double x){
+        return 1 / (1 + Exp(-x)); // Sigmoid
+    }
+
+    double ReLUFunction(double x){
+        return Max(0.0,x); // ReLU
     }
 
     double ActivationDerivitive(double x){
