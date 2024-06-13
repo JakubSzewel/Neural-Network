@@ -19,6 +19,7 @@ public class Neuron
 
         System.Random random = new System.Random();
 
+        // https://www.wolframalpha.com/input?i=plot+sqrt%28-2.0*log%28a%29%29+*+cos%282.0*pi*b%29+for+a+from+0.0001+to+1%2C+b+from+0+to+1
         double a, b;
         a = random.NextDouble();
         b = random.NextDouble();
@@ -29,12 +30,14 @@ public class Neuron
     public void CalculateValue(){
         z = 0;
         for (int i = 0; i < connectionsIn.Count; i++){
+            // Calculating the value recursively
             z += connectionsIn[i].previousNeuron.getValue(false) * connectionsIn[i].weight;
         }
         z += bias;
     }
 
     public double getValue(bool isOutputLayer = false){
+        // If the value is not yet calculated (the values on the input layer are known already)
         if (connectionsIn.Count > 0 && value == default(double)){
             CalculateValue();
             if (!isOutputLayer)

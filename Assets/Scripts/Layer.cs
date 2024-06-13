@@ -14,14 +14,14 @@ public class Layer
         }
     }
 
-    public void SetInputConnections(Layer previousLayer){
+    public void SetInputConnections(Layer previousLayer){ // Creating the connections between neurons
         foreach(Neuron neuron in neurons){
             for(int i = 0; i < previousLayer.numNeurons; i++) {
                 neuron.connectionsIn.Add(new Connection(previousLayer.neurons[i], neuron));
             }
         }
     }
-    public void learn(double step){
+    public void learn(double step){ // Making the neurons learn
         for (int i = 0; i < numNeurons; i++){
             neurons[i].learn(step);
         }
