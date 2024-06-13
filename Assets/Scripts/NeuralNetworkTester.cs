@@ -3,14 +3,24 @@ using UnityEngine;
 
 public class NeuralNetworkTester : MonoBehaviour
 {
-    NeuralNetwork neuralNetwork;
+    [SerializeField]
+    private int epoches = 100;
+    [SerializeField]
+    private int[] layers = {11, 50, 20, 6};
 
-    public void Click()
+    public void ButtonCreateNetwork()
     {
-        // Define your neural network architecture
-        neuralNetwork = new NeuralNetwork(11, 50, 20, 6);
-        // Test the network
-        TestNetwork();
+        NeuralNetwork existingNetwork = FindObjectOfType<NeuralNetwork>();
+        if (existingNetwork != null)
+        {
+            Destroy(existingNetwork.gameObject);
+        }
+
+        // Create a new GameObject for the neural network
+        GameObject nnObject = new GameObject("NeuralNetwork");
+        NeuralNetwork neuralNetwork = nnObject.AddComponent<NeuralNetwork>();
+
+        neuralNetwork.Initialize(layers);
     }
 
     void Display(double[] doubles){
@@ -23,7 +33,7 @@ public class NeuralNetworkTester : MonoBehaviour
         Debug.Log(sb.ToString());
     }
 
-    void TestNetwork()
+    public void ButtonTestNetwork()
     {
         /*
         // Provide input values
@@ -35,8 +45,10 @@ public class NeuralNetworkTester : MonoBehaviour
         // Display the output
         Display(output);
         */
-        neuralNetwork.ReadFromCSV("C:/Users/kubas/Downloads/winequality-red.csv");
-        neuralNetwork.TrainNetwork(100);
-        
+        NeuralNetwork neuralNetwork = FindObjectOfType<NeuralNetwork>();
+        if(neuralNetwork != null){
+            neuralNetwork.ReadFromCSV("C:/Users/kubas/Downloads/winequality-red.csv");
+            neuralNetwork.TrainNetwork(epoches);
+        }
     }
 }

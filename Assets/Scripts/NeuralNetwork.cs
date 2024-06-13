@@ -8,15 +8,19 @@ using Unity.VisualScripting;
 using UnityEditor.PackageManager;
 using UnityEngine;
 
-public class NeuralNetwork
+public class NeuralNetwork : MonoBehaviour
 {
     private List<Data> data = new List<Data>();
     private List<double> costs = new List<double>();
     public Layer[] layers;
+
+    [SerializeField]
     private int batchSize = 10; // Serializable
-    private double step = 2; // Serializable
+    [SerializeField]
+    private double step = 0.5; // Serializable
+
     private int trainingIteration = 0;
-    public NeuralNetwork(params int[] layerSizes){
+    public void Initialize(params int[] layerSizes){
         if (layerSizes.Length < 2){
             Debug.LogError("Too few layers created");
             return;
@@ -132,14 +136,13 @@ public class NeuralNetwork
 
 
                 Train(input, expected);
-                if (trainingIteration%1001==1){
-                    Debug.Log("Iteration: " + j + " Cost: " + getAverageCost());
-                }
+                // if (trainingIteration%1001==1){
+                //     Debug.Log("Iteration: " + j + " Cost: " + getAverageCost());
+                // }
             }
         }
         float endTime = Time.realtimeSinceStartup - startTime;
         Debug.Log("Train time: " + (int)(endTime/60) + "m " + endTime +"s");
-        Debug.Log(data.Count);
         TestNetwork();
     }
 
@@ -150,12 +153,12 @@ public class NeuralNetwork
                 List<double> input = data[i].getInput();
                 List<double> expected = data[i].getExpected();
                 output = SoftMax(CalculateOutputs(input));
-                Debug.Log("i:" + i);
+                //Debug.Log("i:" + i);
                 double max = -1000.0;
                 int eMax = -1;
                 int oMax = -1;
                 for (int j = 0; j < 6; j++) {
-                    Debug.Log("Output: "+ output[j]+", Expected: "+expected[j]);
+                    //Debug.Log("Output: "+ output[j]+", Expected: "+expected[j]);
                     if (output[j] > max){
                         max = output[j];
                         oMax = j;
