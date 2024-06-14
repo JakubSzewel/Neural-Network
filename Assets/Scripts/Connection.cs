@@ -17,6 +17,7 @@ public class Connection
 
         System.Random random = new System.Random();
 
+        // https://www.wolframalpha.com/input?i=plot+sqrt%28-2.0*log%28a%29%29+*+cos%282.0*pi*b%29+for+a+from+0.0001+to+1%2C+b+from+0+to+1
         double a, b;
         a = random.NextDouble();
         b = random.NextDouble();
@@ -27,9 +28,9 @@ public class Connection
     public void addDelta(double delta){
         deltaSum += delta * previousNeuron.getValue();
     }
-
+    
     public void learn(double step){
-        weight += step * deltaSum; // ??? +
+        weight -= step * deltaSum; // ??? +
         deltaSum = 0;
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -9,6 +10,7 @@ public class Neuron
 {
     public double bias = 0;
     public List<Connection> connectionsIn;
+    public List<Connection> connectionsOut;
     public double value;
     private double delta;
     private double deltaSum = 0;
@@ -16,14 +18,14 @@ public class Neuron
 
     public Neuron(){
         connectionsIn = new List<Connection>();
-
+        connectionsOut = new List<Connection>();
         System.Random random = new System.Random();
 
         // https://www.wolframalpha.com/input?i=plot+sqrt%28-2.0*log%28a%29%29+*+cos%282.0*pi*b%29+for+a+from+0.0001+to+1%2C+b+from+0+to+1
         double a, b;
         a = random.NextDouble();
         b = random.NextDouble();
-        bias = Sqrt(-2.0*Log(a)) * Cos(2.0*PI*b) * 0.01;
+        bias = Sqrt(-2.0*Log(a)) * Cos(2.0*PI*b);
     }
 
 
@@ -38,7 +40,7 @@ public class Neuron
 
     public double getValue(bool isOutputLayer = false){
         // If the value is not yet calculated (the values on the input layer are known already)
-        if (connectionsIn.Count > 0 && value == default(double)){
+        if (connectionsIn.Count > 0 && value == Double.MinValue){
             CalculateValue();
             if (!isOutputLayer)
                 value = ActivationFunction(z);
@@ -57,9 +59,9 @@ public class Neuron
     }
 
     public double getDelta(){
-        if (delta == default(double)){
+        if (delta == Double.MinValue){
             double sum = 0;
-            foreach(Connection c in connectionsIn){
+            foreach(Connection c in connectionsOut){
                 sum += c.nextNeuron.getDelta() * c.weight;
             }
             delta = sum + ActivationDerivitive(z);
@@ -72,14 +74,16 @@ public class Neuron
     }
 
     public void learn(double step){
-        if (delta != default(double)){
-            bias -= step * deltaSum;
-            for (int i = 0; i < connectionsIn.Count; i++){
-                // Adjust weights
-                connectionsIn[i].learn(step);
+        if (delta != Double.MinValue){
+            if (connectionsIn.Count > 0) {
+                bias -= step * deltaSum;
+                for (int i = 0; i < connectionsIn.Count; i++){
+                    // Adjust weights
+                    connectionsIn[i].learn(step);
+                }
             }
             deltaSum = 0;
-            delta = default(double);
+            delta = Double.MinValue;
         }
     }
 

@@ -17,7 +17,9 @@ public class Layer
     public void SetInputConnections(Layer previousLayer){ // Creating the connections between neurons
         foreach(Neuron neuron in neurons){
             for(int i = 0; i < previousLayer.numNeurons; i++) {
-                neuron.connectionsIn.Add(new Connection(previousLayer.neurons[i], neuron));
+                Connection newConnection = new Connection(previousLayer.neurons[i], neuron);
+                neuron.connectionsIn.Add(newConnection);
+                previousLayer.neurons[i].connectionsOut.Add(newConnection);
             }
         }
     }

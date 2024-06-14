@@ -4,7 +4,7 @@ using UnityEngine;
 public class NeuralNetworkTester : MonoBehaviour
 {
     [SerializeField]
-    private int epoches = 100; // Number of times it goes through the whole data set in learning
+    private int epoches = 1; // Number of times it goes through the whole data set in learning
     [SerializeField]
     private int[] layers = {11, 50, 20, 6}; // Number of layers (First must be 11, and last 6 for this dataset)
 

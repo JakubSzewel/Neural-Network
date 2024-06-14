@@ -11,13 +11,17 @@ using UnityEngine;
 public class NeuralNetwork : MonoBehaviour
 {
     private List<Data> data = new List<Data>();
+    private List<Data> trainingData = new List<Data>();
+    private List<Data> testingData = new List<Data>();
     private List<double> costs = new List<double>();
     public Layer[] layers;
 
     [SerializeField]
+    private double learningRatio = 0.8;
+    [SerializeField]
     private int batchSize = 10; // Number of iterations before the network learns
     [SerializeField]
-    private double step = 0.5; // Defines how fast the network should learn
+    private double step = 2.0; // Defines how fast the network should learn
 
     private int trainingIteration = 0;
     public void Initialize(params int[] layerSizes){
@@ -44,7 +48,7 @@ public class NeuralNetwork : MonoBehaviour
             if (layer.neurons[0].connectionsIn.Count > 0){
                 foreach (var neuron in layer.neurons)
                 {
-                    neuron.value=default(double);
+                    neuron.value=Double.MinValue;
                 }
             }
         }
@@ -83,7 +87,6 @@ public class NeuralNetwork : MonoBehaviour
         trainingIteration++;
 
         double[] output;
-        double cost;
 
         // Calculate values on the output layer and applies SoftMax for the result
         output = SoftMax(CalculateOutputs(inputValues));
@@ -93,12 +96,7 @@ public class NeuralNetwork : MonoBehaviour
             layers[layers.Length-1].neurons[i].setOutputDelta(expected[i]);
         }
 
-        // Calculate cost - difference between the correct answer
-        cost = GetCost(DenormalizeOutput(output), DenormalizeOutput(expected));
-
-        
-
-        // Vack propagate the deltas
+        // Back propagate the deltas
         for (int i = 0; i < layers[0].numNeurons; i++){
             layers[0].neurons[i].getDelta();
         }
@@ -109,9 +107,11 @@ public class NeuralNetwork : MonoBehaviour
                 layers[i].learn((double)step/batchSize);
             }
         }
-
-        // Added to the average costs
-        costs.Add(cost);
+        // for (int j = 0; j < 6; j++)
+        // {
+        //     Debug.Log("o: " + output[j] + "e: " + expected[j]);
+        // }
+        
     }
 
     private double[] SoftMax(double[] array){ // Makes the answer percent based
@@ -124,11 +124,11 @@ public class NeuralNetwork : MonoBehaviour
         float startTime = Time.realtimeSinceStartup;
 
         for (int i = 0; i < epoches; i++){
-            for (int j = 0; j < data.Count; j++)
+            for (int j = 0; j < trainingData.Count; j++)
             {
-                List<double> input = data[j].getInput();
-                List<double> expected = data[j].getExpected();
-
+                List<double> input = trainingData[j].getInput();
+                List<double> expected = trainingData[j].getExpected();
+                // Debug.Log(j + ": ");
                 // Train on the single data
                 Train(input, expected);
             }
@@ -136,26 +136,36 @@ public class NeuralNetwork : MonoBehaviour
         
         // Time measurement
         float endTime = Time.realtimeSinceStartup - startTime;
-        Debug.Log("Train time: " + (int)(endTime/60) + "m " + endTime +"s");
+        Debug.Log("Train time: " + endTime + "s");
 
         // Test result for the network
-        TestNetwork();
+        Debug.Log("Results for the testing data:");
+        TestNetwork(testingData);
+
+        Debug.Log("Results for the training data:");
+        TestNetwork(trainingData);
     }
 
-      public void TestNetwork(){
+    public void TestNetwork(List<Data> dataList){
         int goodGuesses = 0;
 
-        for(int i =0; i<data.Count;i++){
+        for(int i =0; i<dataList.Count;i++){
                 double[] output;
-                List<double> input = data[i].getInput();
-                List<double> expected = data[i].getExpected();
+                List<double> input = dataList[i].getInput();
+                List<double> expected = dataList[i].getExpected();
                 output = SoftMax(CalculateOutputs(input));
+
+                // Calculate cost - difference between the correct answer
+                double cost = GetCost(DenormalizeOutput(output), DenormalizeOutput(expected));
+                costs.Add(cost);
+
                 double max = -1000.0;
                 int eMax = -1;
                 int oMax = -1;
-
+                //Debug.Log(i + ": ");
                 // Checks if the guess made by the network is correct
                 for (int j = 0; j < 6; j++) {
+                    //Debug.Log("o: " + output[j] + "e: " + expected[j]);
                     if (output[j] > max){
                         max = output[j];
                         oMax = j;
@@ -168,11 +178,16 @@ public class NeuralNetwork : MonoBehaviour
                     goodGuesses++;
         }
 
+        Debug.Log("Average cost: " + getAverageCost());
         Debug.Log("Number of correct guesses: " + goodGuesses);
-        Debug.Log("Percentage of correct guesses: " + Math.Round((double)goodGuesses/(double)data.Count,3)*100 + "%");
+        Debug.Log("Percentage of correct guesses: " + Math.Round(((double)goodGuesses/(double)dataList.Count),3)*100 + "%");
     }
 
     public void ReadFromCSV(string path){ // Reads the file and adds the data to the list
+    
+        data.Clear();
+        costs.Clear();
+        
         StreamReader reader = null;
         if(File.Exists(path)){
             reader = new StreamReader(File.OpenRead(path));
@@ -201,6 +216,10 @@ public class NeuralNetwork : MonoBehaviour
 
             // Normalizes the data so the values fit between 0 and 1
             NormalizeData();
+
+            int learningSize = (int)Math.Round(data.Count * learningRatio);
+            trainingData = data.Take(learningSize).ToList();
+            testingData = data.Skip(learningSize).ToList();
         }
         else {
             //Error
